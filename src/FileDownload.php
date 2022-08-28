@@ -2,36 +2,36 @@
 
 namespace atkuifiledownload;
 
-use Atk4\Core\AppScopeTrait;
 use Atk4\Core\DiContainerTrait;
 use Atk4\Core\Exception;
 use Atk4\Data\Model;
-use Atk4\Ui\App;
+use Atk4\Data\Persistence;
 use fileforatk\File;
 
 class FileDownload
 {
-    use AppScopeTrait;
     use DiContainerTrait;
+
+    protected Persistence $persistence;
 
     public string $paramNameForCryptId = 'fileid';
     public string $modelIdField = 'crypt_id';
+
     protected string $fileName = '';
     protected string $filePath = '';
+    protected bool $terminate = true;
 
     protected string $fileClassName = File::class;
     protected Model $file; //Only generic Model on purpose in case fileforatk\file is not used
 
-    public function __construct(App $app, array $defaults = [])
+    public function __construct(Persistence $persistence, array $defaults = [])
     {
-        $this->setApp($app);
+        $this->persistence = $persistence;
         $this->setDefaults($defaults);
-        $this->sendFile();
-        exit;
     }
 
     /**
-     * cuurently based on fileforatk\File regarding in which fields cryptic id, filename and path to file are stored.
+     * currently based on fileforatk\File regarding in which fields cryptic id, filename and path to file are stored.
      */
     public function sendFile(): void
     {
@@ -40,7 +40,10 @@ class FileDownload
             $this->loadFile();
             $this->_sendFile();
         } catch (\Throwable $e) {
-            http_response_code($e->getCode() >= 400 ?: 500);
+            http_response_code($e->getCode() >= 400 ? $e->getCode() : 500);
+        }
+        if ($this->terminate) {
+            exit;
         }
     }
 
@@ -56,10 +59,10 @@ class FileDownload
 
     protected function loadFile(): void
     {
-        $this->file = new $this->fileClassName($this->getApp()->db);
+        $this->file = new $this->fileClassName($this->persistence);
         $this->file->loadBy(
             $this->modelIdField,
-            $_REQUEST[$this->paramNameForCryptId]
+            $_GET[$this->paramNameForCryptId]
         ); //throws 404 Exception if not found
 
         $this->getFilePathAndName();
