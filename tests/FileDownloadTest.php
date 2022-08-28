@@ -1,12 +1,13 @@
 <?php declare(strict_types=1);
 
-namespace PMRAtk\tests\phpunit\View;
+namespace atkuifiledownload\tests;
 
-use PMRAtk\App\App;
-use PMRAtk\Data\File;
-use PMRAtk\tests\phpunit\TestCase;
-use PMRAtk\View\FileDownload;
-use PMRAtk\View\FileDownloadInline;
+
+use Atk4\Ui\App;
+use atkuifiledownload\FileDownload;
+use atkuifiledownload\FileDownloadInline;
+use fileforatk\File;
+use traitsforatkdata\TestCase;
 
 class FileDownloadTest extends TestCase
 {
@@ -18,11 +19,10 @@ class FileDownloadTest extends TestCase
         File::class
     ];
 
-
     public function setUp(): void
     {
         parent::setUp();
-        $this->app = new App(['nologin'], ['always_run' => false]);
+        $this->app = new App(['always_run' => false]);
         $this->persistence = $this->getSqliteTestPersistence();
         $this->app->db = $this->persistence;
         $this->persistence->app = $this->app;
@@ -41,14 +41,13 @@ class FileDownloadTest extends TestCase
     {
         ob_start();
         $fd = new FileDownload($this->app);
-        $_REQUEST[$fd->paramNameForCryptID] = 'Duggu';
+        $_REQUEST[$fd->paramNameForCryptId] = 'Duggu';
         $fd->sendFile();
         self::assertEquals('', ob_get_contents());
         ob_end_clean();
-        unset($_REQUEST[$fd->paramNameForCryptID]);
+        unset($_REQUEST[$fd->paramNameForCryptId]);
         self::assertEquals(http_response_code(), 404);
     }
-
 
     /**
      * @runInSeparateProcess
@@ -62,7 +61,7 @@ class FileDownloadTest extends TestCase
 
         ob_start();
         $fd = new FileDownLoad($this->app);
-        $_REQUEST[$fd->paramNameForCryptID] = $file->get('crypt_id');
+        $_REQUEST[$fd->paramNameForCryptId] = $file->get('crypt_id');
         @$fd->sendFile();
         self::assertNotFalse(
             strpos(
@@ -71,9 +70,8 @@ class FileDownloadTest extends TestCase
             )
         );
         ob_end_clean();
-        unset($_REQUEST[$fd->paramNameForCryptID]);
+        unset($_REQUEST[$fd->paramNameForCryptId]);
     }
-
 
     /**
      * @runInSeparateProcess
@@ -87,7 +85,7 @@ class FileDownloadTest extends TestCase
 
         ob_start();
         $fd = new FileDownloadInline($this->app);
-        $_REQUEST[$fd->paramNameForCryptID] = $file->get('crypt_id');
+        $_REQUEST[$fd->paramNameForCryptId] = $file->get('crypt_id');
         @$fd->sendFile();
         self::assertNotFalse(
             strpos(
@@ -96,6 +94,6 @@ class FileDownloadTest extends TestCase
             )
         );
         ob_end_clean();
-        unset($_REQUEST[$fd->paramNameForCryptID]);
+        unset($_REQUEST[$fd->paramNameForCryptId]);
     }
 }
